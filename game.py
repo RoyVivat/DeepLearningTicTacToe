@@ -21,14 +21,6 @@ class Game(ABC):
     def render(self):
         pass
 
-    @abstractmethod
-    def save(self):
-        pass
-
-    @abstractmethod
-    def load(self):
-        pass
-
 class TurnBasedGame(Game):
     
     def __init__(self):
@@ -59,15 +51,8 @@ class TurnBasedGame(Game):
             self.update_gamestate(move)
             self.render()
             
-    
     def render(self):
         raise Exception('Render method not implemented for this game.')
-
-    def save(self):
-        raise Exception('Save method not implemented for this game.')
-
-    def load(self):
-        raise Exception('Load method not implemented for this game.')
 
 
 

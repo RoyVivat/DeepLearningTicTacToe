@@ -3,6 +3,7 @@ from typing import List
 from game import Player, TurnBasedGame
 
 class TicTacToe(TurnBasedGame):
+
     def __init__(self):
         super().__init__()
 
@@ -20,7 +21,7 @@ class TicTacToe(TurnBasedGame):
         
         self.gamestate[move] = self.curr_player.id
 
-        if self.check_for_win():
+        if self.get_game_won():
             self.running = False
             self.winner = self.curr_player.name
 
@@ -28,7 +29,7 @@ class TicTacToe(TurnBasedGame):
             self.running = False
             self.winner = "Tie"
 
-    def check_for_win(self):
+    def get_game_won(self):
         for i in range(3):
             if (self.gamestate[i] == self.curr_player.id).all():
                 return True
@@ -66,11 +67,16 @@ class SimpleTTTPlayer(Player):
         valid_moves = TicTacToe().get_valid_moves(gamestate)
         print(valid_moves.shape)
         return tuple(valid_moves[np.random.randint(0, valid_moves.shape[0])])
+        
 
-T = TicTacToe()
-p1 = SimpleTTTPlayer("p1")
-p2 = SimpleTTTPlayer("p2")
+def main():
+    T = TicTacToe()
+    p1 = SimpleTTTPlayer("p1")
+    p2 = SimpleTTTPlayer("p2")
 
-T.init_players([p1, p2])
-T.run()
-print(T.winner)
+    T.init_players([p1, p2])
+    T.run()
+    print(T.winner)
+
+if __name__ == '__main__':
+    main()
