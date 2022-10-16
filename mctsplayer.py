@@ -23,7 +23,7 @@ class MCTSPlayer(Player):
         self.expand_children(root)
 
         # Runs the MCTS algorithm
-        for _ in range(100):
+        for _ in range(1000):
             leaf = self.traverse(root)
             sim_result = self.rollout(leaf)
             self.backpropogate(leaf, sim_result)
@@ -70,7 +70,7 @@ class MCTSPlayer(Player):
         for move in valid_moves:
             g = self.game(node['state'])
             g.update_game_state(move)
-            next_state = g.game_state
+            next_state = g.get_game_state()
             node['children'].append({'wins': 0, 'visits': 0, 'move': move, 'state': next_state, 'children': [], 'parent': node})
 
     def get_best_uct_child(self, node):
@@ -99,12 +99,12 @@ class MCTSPlayer(Player):
         g.init_players([p1, p2])
         g.run()
 
-        if node['state']['curr_player'] == 0:
-            return 1 - g.game_state['result']
-        return g.game_state['result']
+        if node['state']['curr_player'] == 1:
+            return 1 - g.result
+        return g.result
 
     def backpropogate(self, node, sim_result):
-
+        # Saves all of the win and visit information down the tree path
         while True:
             node['wins'] += sim_result
             node['visits'] += 1
@@ -118,6 +118,7 @@ class MCTSPlayer(Player):
                 sim_result = 1
     
     def print_tree(self, node):
+        # Broken function (tree is too wide), only prints information on possible moves
         if not node['parent']:
             print(node['wins'], '/', node['visits'], sep='')
         
@@ -138,6 +139,5 @@ class MCTSPlayer(Player):
             
         def play(self, game_state):
             valid_moves = self.game().get_valid_moves(game_state['board'])
-            #print(valid_moves)
             return valid_moves[np.random.randint(0, len(valid_moves))]
         
