@@ -84,6 +84,7 @@ class TurnBasedGame(ABC):
         if self.is_game_over():
             self.running = False
 
+    @abstractmethod
     def is_valid_move(self, move):
         pass
 
