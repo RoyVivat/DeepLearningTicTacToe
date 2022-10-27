@@ -24,6 +24,6 @@ class Chess(TurnBasedGame):
         board = self.board
 
         if self.is_in_check():
-            i
+            pass
 
 c = Chess()
