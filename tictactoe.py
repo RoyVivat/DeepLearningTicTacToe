@@ -118,8 +118,8 @@ def main():
         
         T = TicTacToe()
 
-        p2 = MCTSPlayer("p2", TicTacToe)
-        p1 = UserTTTPlayer("p1", TicTacToe)
+        p1 = MCTSPlayer("p2", TicTacToe)
+        p2 = UserTTTPlayer("p1", TicTacToe)
 
         T.init_players([p1, p2])
         T.run(render=True)
