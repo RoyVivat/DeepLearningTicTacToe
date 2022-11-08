@@ -25,6 +25,8 @@ class TurnBasedGame(ABC):
 
         else:
             self.board = self.get_start_board()
+            self.game_history = []
+            self.is_saving_history = False
             self.running = True
             self.curr_player = 0 
 
@@ -48,6 +50,9 @@ class TurnBasedGame(ABC):
             self.running = False
 
         while self.running:
+            if self.is_saving_history:
+                self.game_history.append(self.board)
+
             player = self.get_player()
 
             move = player.play(self.get_game_state())

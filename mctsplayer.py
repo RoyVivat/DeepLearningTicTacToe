@@ -7,9 +7,12 @@ import numpy as np
 class MCTSPlayer(Player):
     # TODO: Use of argmax biases the tree expansion (better to randomly select)
 
-    def __init__(self, name, game):
+    def __init__(self, name, game, sim_count = 100):
         self.name = name
         self.game = game
+        self.is_saving_data = False
+        self.saved_data = []
+        self.sim_count = sim_count
 
     def play(self, game_info: dict):
         ## Play loop for MCTS
@@ -18,32 +21,32 @@ class MCTSPlayer(Player):
         self.game_info = game_info
 
         # Creates the search tree
-        # Nodes are of the format: wins, visits, children, parent
-        root = {'wins': 0, 'visits': 0, 'move': None, 'state': game_info, 'children': [], 'parent': None}
+        # Nodes contain wins, visits, move, state, children, parent
+        root = {'wins': 0,
+                'visits': 0,
+                'move': None,
+                'state': game_info,
+                'children': [],
+                'parent': None}
+
         self.expand_children(root)
 
         # Runs the MCTS algorithm
-        for _ in range(1000):
+        for _ in range(self.sim_count):
             leaf = self.traverse(root)
             sim_result = self.rollout(leaf)
             self.backpropogate(leaf, sim_result)
 
         # Finds the best move based on MCTS results
-        best_move = []
-        most_visits = -1
+        visits, moves = zip(*[ (child['visits'], child['move']) for child in root['children'] ])
+        sum_visits = sum(visits)
+        prob_dist = [visit/sum_visits for visit in visits]
 
-        for child in root['children']:
-            if child['visits'] > most_visits:
-                best_move = [child['move']]
-                most_visits = child['visits']
+        # Saves probability distribution and game_board
+        if self.is_saving_data:
+            self.saved_data.append([game_info['board'], np.array(prob_dist)])
 
-            elif child['visits'] == most_visits:
-                best_move.append(child['move'])
-        
-        #self.print_tree(root)
-        #print(best_move)
-        
-        return random.choice(best_move)
+        return moves[np.argmax(visits)]
     
     def traverse(self, root):
         ## Finds the next leaf for rollout
@@ -140,4 +143,10 @@ class MCTSPlayer(Player):
         def play(self, game_state):
             valid_moves = self.game().get_valid_moves(game_state['board'])
             return valid_moves[np.random.randint(0, len(valid_moves))]
-        
+
+
+def main():
+    pass
+
+if __name__ == '__main__':
+    main()

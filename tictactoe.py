@@ -14,8 +14,6 @@ class TicTacToe(TurnBasedGame):
     
     def init_players(self, players):
         self.players = players
-        self.players[0].id = 1
-        self.players[1].id = -1
 
     def is_game_over(self):
         # Checks if the game is in a terminating state
@@ -64,7 +62,7 @@ class TicTacToe(TurnBasedGame):
     
     def get_next_board(self, board, move):
         board = board.copy()
-        board[move] = self.get_player().id
+        board[move] = int(-2*(self.curr_player-0.5))
         return board
     
 
@@ -137,5 +135,15 @@ def main2():
         print(val)
         print()
 
+def main3():
+    agent = MCTSPlayer('p', TicTacToe, 100)
+    agent.is_saving_data = True
+    t = TicTacToe()
+    t.init_players([agent, agent])
+    t.run()
+    print(t.board)
+    print(agent.saved_data)
+    
+
 if __name__ == '__main__':
-    main()
+    main3()
