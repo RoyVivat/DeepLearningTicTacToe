@@ -2,6 +2,7 @@ import numpy as np
 from typing import List
 from game import Player, TurnBasedGame
 from mctsplayer import MCTSPlayer
+from alphazero import AlphaZeroPlayer
 
 class TicTacToe(TurnBasedGame):
     def __init__(self, game_state = None):
@@ -136,7 +137,7 @@ def main2():
         print()
 
 def main3():
-    agent = MCTSPlayer('p', TicTacToe, 100)
+    agent = AlphaZeroPlayer('p', TicTacToe, 10)
     agent.is_saving_data = True
     t = TicTacToe()
     t.init_players([agent, agent])
