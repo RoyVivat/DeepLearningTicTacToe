@@ -1,8 +1,16 @@
+import tensorflow as tf
 import numpy as np
 from typing import List
 from game import Player, TurnBasedGame
 from mctsplayer import MCTSPlayer
 from alphazero import AlphaZeroPlayer
+import time
+import os
+import absl.logging
+import glob
+import sys, os
+absl.logging.set_verbosity(absl.logging.ERROR)
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 class TicTacToe(TurnBasedGame):
     def __init__(self, game_state = None):
@@ -137,14 +145,34 @@ def main2():
         print()
 
 def main3():
-    agent = AlphaZeroPlayer('p', TicTacToe, 10)
+    agent = AlphaZeroPlayer('p', TicTacToe, 100)
+    #agent = MCTSPlayer('p', TicTacToe, 10)
     agent.is_saving_data = True
+
     t = TicTacToe()
     t.init_players([agent, agent])
+    start = time.perf_counter()
     t.run()
-    print(t.board)
-    print(agent.saved_data)
+    end = time.perf_counter()
+    print(end - start)
+    #print(t.board)
+    #print(agent.saved_data)
+
+def main4():
+    folder_path = os.getcwd() + "/saved_models/"
+    file_type = r'/*'
+    files = glob.glob(folder_path + file_type)
+    max_file = max(files, key=os.path.getctime)
+
+    model = tf.keras.models.load_model(max_file)
+    
+    agent = AlphaZeroPlayer('p', TicTacToe, model, 500)
+
+    t = TicTacToe()
+    t.init_players([agent, agent])
+    t.run(render=True)
+
     
 
 if __name__ == '__main__':
-    main3()
+    main4()

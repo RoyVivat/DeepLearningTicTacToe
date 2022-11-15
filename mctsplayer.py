@@ -1,3 +1,4 @@
+import time
 from collections import deque
 import math
 import random
@@ -32,7 +33,7 @@ class MCTSPlayer(Player):
         self.expand_children(root)
 
         # Runs the MCTS algorithm
-        for _ in range(self.sim_count):
+        for _ in range(self.sim_count):            
             leaf = self.traverse(root)
             sim_result = self.rollout(leaf)
             self.backpropogate(leaf, sim_result)
@@ -40,11 +41,13 @@ class MCTSPlayer(Player):
         # Finds the best move based on MCTS results
         visits, moves = zip(*[ (child['visits'], child['move']) for child in root['children'] ])
         sum_visits = sum(visits)
-        prob_dist = [visit/sum_visits for visit in visits]
+        prob_dist = np.zeros(9)
+        for i, move in enumerate(moves):
+            prob_dist[3*move[0]+move[1]] = visits[i]/sum_visits
 
         # Saves probability distribution and game_board
         if self.is_saving_data:
-            self.saved_data.append([game_info['board'], np.array(prob_dist)])
+            self.saved_data.append([game_info['board'].astype('float32'), prob_dist.astype('float32')])
 
         return moves[np.argmax(visits)]
     
@@ -54,12 +57,12 @@ class MCTSPlayer(Player):
         # Start at the root and move down the tree based on UCT until the node doesn't have children
 
         node = root
-
+        
         while node['children']:
             node = self.get_best_uct_child(node)
-        
+
         self.expand_children(node)
-        
+
         return node
   
     def expand_children(self, node):

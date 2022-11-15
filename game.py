@@ -18,10 +18,12 @@ class TurnBasedGame(ABC):
         """
 
         if game_state:
-            game_state = copy.deepcopy(game_state)
+            #game_state = copy.deepcopy(game_state)
 
             for k, v in game_state.items():
                 setattr(self, k, v)
+
+            self.board = copy.deepcopy(self.board)
 
         else:
             self.board = self.get_start_board()

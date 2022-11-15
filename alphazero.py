@@ -1,8 +1,11 @@
+import time
 import math
 import tensorflow as tf
 from tensorflow.keras import layers
 import numpy as np
 from mctsplayer import MCTSPlayer
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 
 def alphazero_model(input_shape, output_shape):
@@ -22,7 +25,7 @@ def alphazero_model(input_shape, output_shape):
         return x
 
     # Recieve and pad input
-    input_layer = layers.Input(shape=input_shape, name="Input")
+    input_layer = layers.Input(shape=input_shape, name="input")
     
     # Convolutional block
     x = convolutional_layer(input_layer)
@@ -49,10 +52,27 @@ def alphazero_model(input_shape, output_shape):
     p = layers.Dense(output_shape)(p)
     policy_output = layers.Softmax()(p)
 
-    return tf.keras.Model(input_layer, [value_output, policy_output])
+    model = tf.keras.Model(input_layer, [value_output, policy_output])
+    model.compile(loss=['mean_squared_error', 'categorical_crossentropy'])
+    return model
 
+# print('starting code...')
+# start_model = time.perf_counter()
 # model = alphazero_model((3,3,1,), 9)
-# res = model(np.random.rand(1,3,3,1))
+# end_model = time.perf_counter()
+# print(end_model - start_model)
+
+
+# time_list = []
+# for i in range(20):
+#     rand = np.random.rand(1,3,3,1)
+#     start = time.perf_counter()
+#     res = model(rand)
+#     end = time.perf_counter()
+#     time_list.append(end-start)
+# print(time_list)
+# print(np.mean(time_list))
+
 # print(1 + res)
 # print(res[1][0][0])
 
@@ -60,9 +80,12 @@ def alphazero_model(input_shape, output_shape):
 # tf.keras.utils.plot_model(model, "AlphaZero.png", show_shapes=True)
 
 class AlphaZeroPlayer(MCTSPlayer):
-    def __init__(self, name, game, sim_count=100):
+    def __init__(self, name, game, model=None, sim_count=100):
         super().__init__(name, game, sim_count)
-        self.model = alphazero_model((3,3,1), 9)
+        if not model:
+            self.model = alphazero_model((3,3,1), 9)
+        else:
+            self.model = model
 
     def rollout(self, node):
         ## Performs rollout. Simulates game from current state
@@ -100,7 +123,10 @@ class AlphaZeroPlayer(MCTSPlayer):
             return
 
         valid_moves = self.game.get_valid_moves(node['state']['board'])
-        priors = self.model(node['state']['board'].reshape(1,3,3,1))[1][0].numpy().reshape(3,3)
+        
+        priors = np.random.dirichlet([2 for _ in range(9)], 1).reshape((3,3))
+        priors += self.model(node['state']['board'].reshape(1,3,3,1))[1][0].numpy().reshape(3,3)
+        priors /= 2
 
         for move in valid_moves:
             g = self.game(node['state'])
