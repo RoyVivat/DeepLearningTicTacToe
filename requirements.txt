@@ -1,0 +1,5 @@
+absl==0.0
+absl_py==1.0.0
+numpy==1.20.1
+pandas==1.2.4
+tensorflow==2.10.0
