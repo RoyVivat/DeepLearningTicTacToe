@@ -2,7 +2,7 @@ import time
 from collections import deque
 import math
 import random
-from game import Player
+from games.game import Player
 import numpy as np
 
 class MCTSPlayer(Player):

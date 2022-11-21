@@ -3,10 +3,10 @@ import pandas as pd
 import math
 import tensorflow as tf
 import numpy as np
-from game import Player
-from mctsplayer import MCTSPlayer
-from tictactoe import TicTacToe
-from alphazero import AlphaZeroPlayer, alphazero_model
+from games.game import Player
+from players.mctsplayer import MCTSPlayer
+from games.tictactoe import TicTacToe
+from players.alphazero import AlphaZeroPlayer, alphazero_model
 
 def save_model(model):
     folder_path = os.getcwd() + "/saved_models/"

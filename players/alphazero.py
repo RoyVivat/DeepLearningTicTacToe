@@ -3,7 +3,7 @@ import math
 import tensorflow as tf
 from tensorflow.keras import layers
 import numpy as np
-from mctsplayer import MCTSPlayer
+from players.mctsplayer import MCTSPlayer
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 

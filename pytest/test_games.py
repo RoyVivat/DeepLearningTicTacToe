@@ -1,5 +1,5 @@
 import numpy as np
-from tictactoe import TicTacToe, RandomTTTPlayer
+from games.tictactoe import TicTacToe, RandomTTTPlayer
 
 def test_example_test():
     assert( 1==1 )

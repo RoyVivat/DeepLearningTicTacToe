@@ -1,7 +1,7 @@
 import numpy as np
 from typing import List
-from game import Player, TurnBasedGame
-from mctsplayer import MCTSPlayer
+from games.game import Player, TurnBasedGame
+from players.mctsplayer import MCTSPlayer
 
 class Chess(TurnBasedGame):
     def __init__(self, game_state = None):
