@@ -1,12 +1,25 @@
 from abc import ABC, abstractmethod, abstractproperty
 from typing import List
 from collections import defaultdict
+from enum import IntEnum
 import copy
 
 class Player(ABC):
     @abstractmethod
     def play(self, game_info):
         pass
+
+class Turn(IntEnum):
+    P1 = 1
+    P2 = -1
+
+    def next(turn):
+        return -turn
+
+class Result(IntEnum):
+    WIN = 1
+    TIE = 0
+    LOSS = -1
 
 class TurnBasedGame(ABC):
     
@@ -30,13 +43,7 @@ class TurnBasedGame(ABC):
             self.game_history = []
             self.is_saving_history = False
             self.running = True
-            self.curr_player = 0 
-
-    @staticmethod
-    @abstractmethod
-    def get_start_board():
-        # Gets the initial board state.
-        pass
+            self.turn = Turn.P1
 
     def run(self, render=False):
         """This is the run loop of the game.
@@ -63,17 +70,12 @@ class TurnBasedGame(ABC):
             if render:
                 self.render(self.board)
     
-    def init_players(self, players: List[Player]):
+    def init_players(self, players: List[Player], turn = 0):
         self.players = players
-        self.curr_player = 0
+        self.turn = turn
 
-    @abstractmethod
-    def is_game_over(self, board):
-        # Checks if the game is over
-        pass
-    
     def get_player(self):
-        return self.players[self.curr_player]
+        return self.players[self.turn]
     
     def get_game_state(self):
         return vars(self)
@@ -90,22 +92,33 @@ class TurnBasedGame(ABC):
 
         if self.is_game_over():
             self.running = False
+    
+    def get_next_game_state(self, move):
+        self.update_board(move)
+        self.update_player()
+        return self.get_game_state()
+    
+    def update_player(self):
+        self.turn = Turn.next(self.turn)
+
+    def render(self):
+        raise Exception('Render method not implemented for this game.')
+    
+    @staticmethod
+    @abstractmethod
+    def get_start_board():
+        # Gets the initial board state.
+        pass
+
+    @abstractmethod
+    def is_game_over(self, board):
+        # Checks if the game is over
+        pass
 
     @abstractmethod
     def is_valid_move(self, move):
         pass
 
-    def get_next_game_state(self, move):
-        self.update_board(move)
-        self.update_player()
-        return self.get_game_state()
-
     @abstractmethod
     def get_next_board(self, board, move):
         pass    
-
-    def update_player(self):
-        self.curr_player = (self.curr_player + 1) % 2
-
-    def render(self):
-        raise Exception('Render method not implemented for this game.')

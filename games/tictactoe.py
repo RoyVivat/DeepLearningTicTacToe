@@ -1,20 +1,25 @@
-import tensorflow as tf
+#import tensorflow as tf
 import numpy as np
-from typing import List
-from games.game import Player, TurnBasedGame
+
+import sys
+sys.path.append('.')
+import time
+import absl.logging
+import os
+import glob
+from enum import IntEnum
+
+from games.game import Player, TurnBasedGame, Turn, Result
 from players.mctsplayer import MCTSPlayer
 from players.alphazero import AlphaZeroPlayer
-import time
-import os
-import absl.logging
-import glob
-import sys, os
-absl.logging.set_verbosity(absl.logging.ERROR)
+
+#absl.logging.set_verbosity(absl.logging.ERROR)
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 class TicTacToe(TurnBasedGame):
     def __init__(self, game_state = None):
         super().__init__(game_state)
+        self.players = {Turn.P1:None, Turn.P2:None}
     
     @staticmethod
     def get_start_board():
@@ -22,36 +27,36 @@ class TicTacToe(TurnBasedGame):
         return np.zeros([3,3])
     
     def init_players(self, players):
-        self.players = players
+        self.players = {1: players[0], -1: players[1]}
 
     def is_game_over(self):
         # Checks if the game is in a terminating state
         board = self.board
         won = False
+        result = None
 
+        # Check rows and columns
         for i in range(3):
             if np.all(board[i] == board[i][0]) and board[i][0] != 0:
-                won = True
-                result = int((board[i][0]/2 + 0.5))
+                result = board[i][0]
                 break
             if np.all(board[:, i] == board[0][i]) and board[0][i] != 0:
-                won = True
-                result = int((board[0][i]/2 + 0.5))
+                result = board[0][i]
                 break
-
-        if board[0,0] == board[1,1] == board[2,2] and board[0][0] != 0:
-            won = True
-            result = int((board[0][0]/2 + 0.5))
-        elif board[0,2] == board[1,1] == board[2,0] and board[0][2] != 0:
-            won = True
-            result = int((board[0][2]/2 + 0.5))
-
-        if won:
-            self.result = result
-            return True
         
+        # Check diagonals
+        if board[0,0] == board[1,1] == board[2,2] and board[0][0] != 0:
+            result = board[0][0]
+        elif board[0,2] == board[1,1] == board[2,0] and board[0][2] != 0:
+            result = board[0][2]
+
+        if result:
+            self.result = Result(result)
+            return True
+
+        # Check for tie
         if not (board == 0).any():
-            self.result = 0.5
+            self.result = Result.TIE
             return True
 
         return False
@@ -71,9 +76,8 @@ class TicTacToe(TurnBasedGame):
     
     def get_next_board(self, board, move):
         board = board.copy()
-        board[move] = int(-2*(self.curr_player-0.5))
+        board[move] = self.turn
         return board
-    
 
     @staticmethod
     def render(board):
@@ -117,22 +121,21 @@ class UserTTTPlayer(Player):
         return (int(inp[0]), int(inp[2]))
 
 def main():
-    results = [0,0,0]
+    results = {-1:0, 0:0, 1:0}
 
-    for i in range(1):
+    for i in range(100):
 
         #game_state = {'board':np.array([[0,1,2],[0,0,0],[1,1,2]]), 'running':True, 'curr_player':1}
         
         T = TicTacToe()
 
-        p2 = AlphaZeroPlayer("p2", TicTacToe, sim_count=3)
-        p1 = UserTTTPlayer("p1", TicTacToe)
+        p1 = MCTSPlayer("p1", TicTacToe, 100)
+        p2 = MCTSPlayer("p2", TicTacToe, 500)
 
         T.init_players([p1, p2])
-        T.run(render=True)
-        T.render(T.board)
+        T.run(render=False)
 
-        results[int(2*T.result)] += 1 
+        results[T.result] += 1 
         #print(T.game_state['result'])
 
     print(results)
@@ -164,7 +167,7 @@ def main4():
     files = glob.glob(folder_path + file_type)
     max_file = max(files, key=os.path.getctime)
 
-    model = tf.keras.models.load_model(max_file)
+    model = 0#tf.keras.models.load_model(max_file)
     
     agent = AlphaZeroPlayer('p', TicTacToe, model, 500)
 

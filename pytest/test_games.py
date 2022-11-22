@@ -1,4 +1,8 @@
 import numpy as np
+
+import sys
+sys.path.append('.')
+
 from games.tictactoe import TicTacToe, RandomTTTPlayer
 
 def test_example_test():
@@ -17,8 +21,8 @@ def test_tictactoe_player_init():
     t = TicTacToe()
     t.init_players( [RandomTTTPlayer("p1", TicTacToe), RandomTTTPlayer("p2", TicTacToe)] )
 
-    assert( t.players[0].name == 'p1' )
-    assert( t.players[1].name == 'p2' )
+    assert( t.players[1].name == 'p1' )
+    assert( t.players[-1].name == 'p2' )
 
 def test_tictactoe_rand_playthrough():
     t = TicTacToe()
