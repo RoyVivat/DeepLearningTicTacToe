@@ -2,3 +2,5 @@ test.py
 *.png
 requirements.txt
 *.csv
+mctsplayertwo.py
+az_multiproc.py

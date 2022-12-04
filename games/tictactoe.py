@@ -1,17 +1,16 @@
-#import tensorflow as tf
+import tensorflow as tf
 import numpy as np
 
 import sys
 sys.path.append('.')
-import time
-import absl.logging
 import os
+import absl.logging
 import glob
-from enum import IntEnum
 
-from games.game import Player, TurnBasedGame, Turn, Result
-from players.mctsplayer import MCTSPlayer
-from players.alphazero import AlphaZeroPlayer
+from games.game import TurnBasedGame, Turn, Result
+from players.mcts_player import MCTSPlayer
+from players.az_player import AlphaZeroPlayer
+from players.basic_players import UserTTTPlayer
 
 #absl.logging.set_verbosity(absl.logging.ERROR)
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
@@ -79,58 +78,37 @@ class TicTacToe(TurnBasedGame):
         board[move] = self.turn
         return board
 
+
     @staticmethod
     def render(board):
         print(board)
+        print()
+
+    def get_valid_moves(self):
+        return [tuple(i) for i in np.argwhere(self.board==0)]
 
     @staticmethod
-    def get_valid_moves(board):
-        return [tuple(i) for i in np.argwhere(board==0)]
-
-
-# Picks all moves randomly
-class RandomTTTPlayer(Player):
-    def __init__(self, name, game):
-            self.name = name
-            self.game = game
-            
-    def play(self, game_state):
-        valid_moves = self.game().get_valid_moves(game_state['board'])
-        return valid_moves[np.random.randint(0, len(valid_moves))]
-
-# Tries to grab the center as quickly as possible and then plays randomly
-class SimpleTTTPlayer(Player):
-    def __init__(self, name):
-        self.name = name
-    
-    def play(self, game_state):
-        valid_moves = TicTacToe().get_valid_moves(game_state['board'])
-        valid_moves = [list(coord) for coord in valid_moves]
-
-        if [1, 1] in valid_moves:
-            return (1, 1)
-
-        return tuple(valid_moves[np.random.randint(0, len(valid_moves))]) 
-
-class UserTTTPlayer(Player):
-    def __init__(self, name, game):
-        self.name = name
-    
-    def play(self, game_state):
-        inp = input()
-        return (int(inp[0]), int(inp[2]))
+    def generate_hashkey(game_state):
+        return game_state['board'].tobytes()
 
 def main():
     results = {-1:0, 0:0, 1:0}
 
-    for i in range(100):
+    folder_path = os.getcwd() + "/saved_models/"
+    file_type = r'/*'
+    files = glob.glob(folder_path + file_type)
+    max_file = max(files, key=os.path.getctime)
 
-        #game_state = {'board':np.array([[0,1,2],[0,0,0],[1,1,2]]), 'running':True, 'curr_player':1}
-        
+    model = tf.keras.models.load_model(max_file)
+
+
+    for i in range(15):
+
         T = TicTacToe()
+        print(T.board)
 
-        p1 = MCTSPlayer("p1", TicTacToe, 100)
-        p2 = MCTSPlayer("p2", TicTacToe, 500)
+        p1 = MCTSPlayer(TicTacToe, 100)
+        p2 = AlphaZeroPlayer(TicTacToe, model, 100)
 
         T.init_players([p1, p2])
         T.run(render=False)
@@ -140,40 +118,36 @@ def main():
 
     print(results)
 
+# def main3():
+#     agent = AlphaZeroPlayer('p', TicTacToe, 100)
+#     #agent = MCTSPlayer('p', TicTacToe, 10)
+#     agent.is_saving_data = True
 
-def main2():
-    for key, val in TicTacToe().__dict__.items():
-        print(key)
-        print(val)
-        print()
+#     t = TicTacToe()
+#     t.init_players([agent, agent])
+#     start = time.perf_counter()
+#     t.run()
+#     end = time.perf_counter()
+#     print(end - start)
+#     #print(t.board)
+#     #print(agent.saved_data)
 
-def main3():
-    agent = AlphaZeroPlayer('p', TicTacToe, 100)
-    #agent = MCTSPlayer('p', TicTacToe, 10)
-    agent.is_saving_data = True
+# def main4():
+#     folder_path = os.getcwd() + "/saved_models/"
+#     file_type = r'/*'
+#     files = glob.glob(folder_path + file_type)
+#     max_file = max(files, key=os.path.getctime)
 
-    t = TicTacToe()
-    t.init_players([agent, agent])
-    start = time.perf_counter()
-    t.run()
-    end = time.perf_counter()
-    print(end - start)
-    #print(t.board)
-    #print(agent.saved_data)
-
-def main4():
-    folder_path = os.getcwd() + "/saved_models/"
-    file_type = r'/*'
-    files = glob.glob(folder_path + file_type)
-    max_file = max(files, key=os.path.getctime)
-
-    model = 0#tf.keras.models.load_model(max_file)
+#     model = tf.keras.models.load_model(max_file)
     
-    agent = AlphaZeroPlayer('p', TicTacToe, model, 500)
+#     agent = AlphaZeroPlayer('p', TicTacToe, model, 100)
+#     agent.is_saving_data = True
+#     p2 = MCTSPlayer('p2', TicTacToe, 100)
+#     t = TicTacToe()
+#     t.init_players([p2, agent])
+#     t.run(render=True)
 
-    t = TicTacToe()
-    t.init_players([agent, agent])
-    t.run(render=True)
+#     print(agent.saved_data)
 
     
 

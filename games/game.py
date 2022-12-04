@@ -14,7 +14,7 @@ class Turn(IntEnum):
     P2 = -1
 
     def next(turn):
-        return -turn
+        return Turn.P1 if turn == Turn.P2 else Turn.P2
 
 class Result(IntEnum):
     WIN = 1
@@ -89,14 +89,8 @@ class TurnBasedGame(ABC):
         self.board = self.get_next_board(self.board, move)
         self.update_player()
 
-
         if self.is_game_over():
             self.running = False
-    
-    def get_next_game_state(self, move):
-        self.update_board(move)
-        self.update_player()
-        return self.get_game_state()
     
     def update_player(self):
         self.turn = Turn.next(self.turn)
@@ -121,4 +115,8 @@ class TurnBasedGame(ABC):
 
     @abstractmethod
     def get_next_board(self, board, move):
-        pass    
+        pass
+
+    @abstractmethod
+    def generate_hashkey(self):
+        pass
