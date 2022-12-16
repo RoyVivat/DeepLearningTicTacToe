@@ -71,9 +71,14 @@ def alphazero_model_loader(): # Edit to support different model shapes and savin
         return model
 
 def main():
-    model = alphazero_model((3,3,1,), 9)
+    model = alphazero_model((3,3,2,), 9)
     model.summary()
     tf.keras.utils.plot_model(model, "AlphaZero.png", show_shapes=True)
+
+    
+    a = np.array([[0,1,1],[-1,0,1],[-1,-1,0]])
+    inp = np.array([(a==val).astype(int) for val in [1, -1]]).reshape((1,3,3,2))
+    print(model(inp))
     
 if __name__ == '__main__':
     main()

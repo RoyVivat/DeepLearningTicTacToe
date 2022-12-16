@@ -31,8 +31,6 @@ class TurnBasedGame(ABC):
         """
 
         if game_state:
-            #game_state = copy.deepcopy(game_state)
-
             for k, v in game_state.items():
                 setattr(self, k, v)
 
@@ -40,10 +38,9 @@ class TurnBasedGame(ABC):
 
         else:
             self.board = self.get_start_board()
-            self.game_history = []
-            self.is_saving_history = False
-            self.running = True
             self.turn = Turn.P1
+
+        self.running = True
 
     def run(self, render=False):
         """This is the run loop of the game.
@@ -59,8 +56,6 @@ class TurnBasedGame(ABC):
             self.running = False
 
         while self.running:
-            if self.is_saving_history:
-                self.game_history.append(self.board)
 
             player = self.get_player()
 

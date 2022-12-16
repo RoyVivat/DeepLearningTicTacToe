@@ -24,7 +24,7 @@ class MCTS():
 
         # Initializes a Node dataclass
         default_node_fields = [('wins', float, 0), ('visits', int, 0), ('move', any, None),
-                               ('state', any, None), ('children', list, field(default_factory=list)), ('parent', any, None)]
+                               ('board', np.ndarray, None), ('turn', Turn, None), ('children', list, field(default_factory=list)), ('parent', any, None)]
         default_node_fields.extend(node_fields)
         self.Node = make_dataclass('Node', default_node_fields)
         self.node_dict = {}
@@ -35,31 +35,33 @@ class MCTS():
 
     def update_root(self, game_state):
         """Updates the root node to the new state of interest."""
-        hashkey = self.game.generate_hashkey(game_state)
+        hashkey = self.game.generate_hashkey(game_state['board'])
         
         if hashkey in self.node_dict:
             self.root = self.node_dict[hashkey]
         else:
             self.root = self.Node()
-            self.root.state = game_state
+            self.root.board = game_state['board']
+            self.root.turn = game_state['turn']
             self.node_dict[hashkey] = self.root
     
     def expand_children(self, node):
         """Expands the children of a leaf node based on valid moves from that state."""
-
-        g = self.game(node.state)
+        g = self.game({'board': node.board, 'turn': node.turn})
         if g.is_game_over():
             return
 
         valid_moves = g.get_valid_moves()
+        next_turn = Turn.next(g.turn)
 
         for move in valid_moves:
-            g = self.game(node.state)
-            g.update_game_state(move)
-            next_state = g.get_game_state()
-            hashkey = self.game.generate_hashkey(next_state)
-            next_node = self.Node(wins=0, visits=0, move=move, state=next_state, children=[], parent=node)
+            next_board = g.get_next_board(g.board, move)
+
+            next_node = self.Node(wins=0, visits=0, move=move, board=next_board, turn=next_turn, children=[], parent=node)
+
+            hashkey = self.game.generate_hashkey(next_board)
             self.node_dict[hashkey] = next_node
+            
             node.children.append(next_node)
 
     def mcts(self, n_simulations: int):
@@ -102,14 +104,14 @@ class MCTS():
     def rollout(self, node):
         """Performs rollout. Simulates game from current state."""
 
-        g = self.game(node.state)
+        g = self.game({'board': node.board, 'turn': node.turn})
         p1, p2 = RandomPlayer(self.game), RandomPlayer(self.game)
         g.init_players([p1, p2])
         g.run()
 
         # Checks for the player of interest and updates the result accordingly
         # We reverse the output when player 2 made the last move
-        if node.state['turn'] == Turn.P1:
+        if node.turn == Turn.P1:
             # Transforms result to win condition (1, 0, -1) -> (0, 0.5, 1)
             return (g.result - 1)/-2
         # Transforms result to win condition (-1, 0, 1) -> (0, 0.5, 1)
@@ -147,20 +149,19 @@ class AlphaZeroMCTS(MCTS):
             self.model = alphazero_model(model_input_shape, model_output_shape)
         else:
             self.model = model
-        
+
         self.temp = 1
 
     def rollout(self, node):
         """Performs rollout. Uses AlphaZero value output instead of simulation."""
-        g = self.game(node.state)
+        g = self.game({'board': node.board, 'turn': node.turn})
         if g.is_game_over():
             result = (g.result+1)/2
-            return result if node.state['turn'] == Turn.P2 else 1-result
+            return result if node.turn == Turn.P2 else 1-result
 
         # Change board perspective for model
-        board = -node.state['board'] if node.state['turn'] == Turn.P2 else node.state['board']
-
-        sim_result = (-self.model(board.reshape(tuple([1] + list(self.model.input_shape)[1:])))[0][0][0]+1)/2
+        board = -node.board if node.turn == Turn.P2 else node.board
+        sim_result = (-self.model( np.expand_dims(self.board2ohe(board), 0) )[0][0][0]+1)/2
         return sim_result
 
     def calc_puct(self, node):
@@ -171,18 +172,25 @@ class AlphaZeroMCTS(MCTS):
 
     def expand_children(self, node):
         """Expands the children of a leaf node based on valid moves from that state and prior probabilities of its children."""
-        g = self.game(node.state)
+        g = self.game({'board': node.board, 'turn': node.turn})
         if g.is_game_over():
             return
 
         valid_moves = g.get_valid_moves()
-        priors = self.model(node.state['board'].reshape(tuple([1] + list(self.model.input_shape)[1:])))[1][0].numpy().reshape(g.board.shape)
+        priors = self.model( np.expand_dims(self.board2ohe(node.board), 0) )[1][0].numpy().reshape(g.board.shape)
+        next_turn = Turn.next(g.turn)
 
         for move in valid_moves:
-            g = self.game(node.state)
-            g.update_game_state(move)
-            next_state = g.get_game_state()
-            hashkey = self.game.generate_hashkey(next_state)
-            next_node = self.Node(wins=0, visits=0, move=move, state=next_state, children=[], parent=node, prior=priors[move])
+            next_board = g.get_next_board(node.board, move)
+            
+            next_node = self.Node(wins=0, visits=0, move=move, board=next_board, turn=next_turn, children=[], parent=node, prior=priors[move])
+            
+            hashkey = self.game.generate_hashkey(next_board)
             self.node_dict[hashkey] = next_node
+
             node.children.append(next_node)
+
+    def board2ohe(self, board):
+        """Coverts numpy board to one hot encoding input for neural network."""
+
+        return np.stack(np.array([board==val for val in [-1, 1]]), axis=2)

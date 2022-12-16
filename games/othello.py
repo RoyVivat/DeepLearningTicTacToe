@@ -4,11 +4,14 @@ from colorama import Back, Style
 import sys
 sys.path.append('.')
 import time
+import glob
+import os
+from collections import defaultdict
 
 from games.game import TurnBasedGame, Turn
-from players.mcts_player import MCTSPlayer
-from players.az_player import AlphaZeroPlayer
-from players.basic_players import RandomPlayer, UserTTTPlayer
+#from players.mcts_player import MCTSPlayer
+#from players.az_player import AlphaZeroPlayer
+#from players.basic_players import RandomPlayer, UserTTTPlayer
 
 class Othello(TurnBasedGame):
     def __init__(self, game_state = None):
@@ -132,20 +135,74 @@ class Othello(TurnBasedGame):
             coord[1] += c_inc
 
     @staticmethod
-    def generate_hashkey(game_state):
-        return game_state['board'].tobytes()
+    def generate_hashkey(board):
+        return board.tobytes()
 
 def main():
-    start = time.perf_counter()
+    import tensorflow as tf
+    from players.az_player import AlphaZeroPlayer
+    from players.basic_players import UserTTTPlayer
+    
+    folder_path = os.getcwd() + "/othello/saved_models/"
+    file_type = r'/*'
+    files = glob.glob(folder_path + file_type)
+    
+    print(f'files {files}')
+    if not files:
+        pass
+    else:
+        print('loading model...')
+        max_file = max(files, key=os.path.getctime)
+        print(max_file)
+        model = tf.keras.models.load_model(max_file)
+        print('model loaded!')
+
+    p1 = AlphaZeroPlayer(Othello, (8,8,2), 64, None, 10, False)
+    p1.mcts.model = model
+    p2 = AlphaZeroPlayer(Othello, (8,8,2), 64, None, 10, False)
+
+    results = defaultdict(lambda: 0)
+
+    for _ in range(10):
+        O = Othello()
+        O.init_players([p1,p2])
+        O.run(render=False)
+        results[O.result] += 1
+        p1.mcts.node_dict = {}
+        p2.mcts.node_dict = {}
+
+    print(results)
+
+    results = defaultdict(lambda: 0)
+
+    for _ in range(10):
+        O = Othello()
+        O.init_players([p2,p1])
+        O.run(render=False)
+        results[O.result] += 1
+
+    print(results)
+
+def main2():
+    # Negligible: MCTS.update_root(), Othello.generate_hashkey(), 
+    # average of 5 runtime for RandomPlayer run(): 0.2620445608 seconds
+    # get_valid_moves() on start board:            0.0021001454 seconds and similar on variations
+    # AZ play with [1,10,100,500] sims resulted in [0.1409461673, 0.6688825103, 5.985348204, 34.696359343] second times (linear relationship)
+    # MCTS.expand_children:                        0.0200577684 seconds
+    # Each player.play() run MCTS.expand_children n_simulations+1 times
+    # MCTS.rollout():                              0.0208837401 seconds
+    # AZ model output:                             0.0166566743 seconds
+    # expand_children was reduced from 0.036 to 0.020 so above calculations may be inaccurate
+
+    from players.az_player import AlphaZeroPlayer
+
     O = Othello()
-    p1 = AlphaZeroPlayer(Othello, (8,8,1), 64, None, 10, True)
+    p1 = AlphaZeroPlayer(Othello, (8,8,2), 64, None, 10, True)
     O.init_players([p1,p1])
     O.run(render=False)
-    end = time.perf_counter()
-
     print(O.result)
-    print(f'It took {end - start} seconds to finish the game')
+    print(p1.saved_data)
 
 
 if __name__ == '__main__':
-    main()
+    main2()

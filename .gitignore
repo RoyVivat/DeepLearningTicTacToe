@@ -4,3 +4,7 @@ requirements.txt
 *.csv
 mctsplayertwo.py
 az_multiproc.py
+.gitignore
+__pycache__
+.pytest_cache
+.vscode
