@@ -88,7 +88,7 @@ def train_loop(model = False, training_iters = 80):
 
     for i in range(training_iters):
         
-        train = generate_example_game_data(model, episodes = 2, n_simulations = 15)
+        train = generate_example_game_data(model, episodes = 32, n_simulations = 100)
 
         x_train = tf.convert_to_tensor(train['board'].to_list())
 
@@ -106,7 +106,7 @@ def main():
     
     print(f'files {files}')
     if not files:
-        train_loop(training_iters=1)
+        train_loop(training_iters=300)
     else:
         max_file = max(files, key=os.path.getctime)
         model = tf.keras.models.load_model(max_file)
