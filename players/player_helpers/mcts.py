@@ -38,12 +38,13 @@ class MCTS():
         hashkey = self.game.generate_hashkey(game_state['board'])
         
         if hashkey in self.node_dict:
-            self.root = self.node_dict[hashkey]
+            # self.root = self.node_dict[hashkey]
+            pass
         else:
             self.root = self.Node()
             self.root.board = game_state['board']
             self.root.turn = game_state['turn']
-            self.node_dict[hashkey] = self.root
+            # self.node_dict[hashkey] = self.root
     
     def expand_children(self, node):
         """Expands the children of a leaf node based on valid moves from that state."""
@@ -60,7 +61,7 @@ class MCTS():
             next_node = self.Node(wins=0, visits=0, move=move, board=next_board, turn=next_turn, children=[], parent=node)
 
             hashkey = self.game.generate_hashkey(next_board)
-            self.node_dict[hashkey] = next_node
+            # self.node_dict[hashkey] = next_node
             
             node.children.append(next_node)
 
@@ -177,7 +178,8 @@ class AlphaZeroMCTS(MCTS):
             return
 
         valid_moves = g.get_valid_moves()
-        priors = self.model( np.expand_dims(self.board2ohe(node.board), 0) )[1][0].numpy().reshape(g.board.shape)
+        board = -node.board if node.turn == Turn.P2 else node.board
+        priors = self.model( np.expand_dims(self.board2ohe(board), 0) )[1][0].numpy().reshape(g.board.shape)
         next_turn = Turn.next(g.turn)
 
         for move in valid_moves:
@@ -186,7 +188,7 @@ class AlphaZeroMCTS(MCTS):
             next_node = self.Node(wins=0, visits=0, move=move, board=next_board, turn=next_turn, children=[], parent=node, prior=priors[move])
             
             hashkey = self.game.generate_hashkey(next_board)
-            self.node_dict[hashkey] = next_node
+            # self.node_dict[hashkey] = next_node
 
             node.children.append(next_node)
 

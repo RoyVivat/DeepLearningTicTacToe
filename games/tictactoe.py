@@ -4,19 +4,32 @@ import numpy as np
 import sys
 sys.path.append('.')
 import os
-import absl.logging
 import glob
+import logging
+from collections import defaultdict
 
 from games.game import TurnBasedGame, Turn, Result
-from players.mcts_player import MCTSPlayer
-from players.az_player import AlphaZeroPlayer
-from players.basic_players import UserTTTPlayer
+# from players.mcts_player import MCTSPlayer
+# from players.az_player import AlphaZeroPlayer
+# from players.basic_players import UserTTTPlayer
 
-#absl.logging.set_verbosity(absl.logging.ERROR)
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+def init_logger():
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    f = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    fh = logging.FileHandler(f'debug.log', 'w')
+    fh.setFormatter(f)
+    logger.addHandler(fh)
+    return logger
+logger = init_logger()
+# logger.disabled = True
 
 class TicTacToe(TurnBasedGame):
+    INPUT_SIZE = (3,3,2)
+    OUTPUT_SIZE = 9
+
     def __init__(self, game_state = None):
+        logger.debug("Initializing TicTacToe.")
         super().__init__(game_state)
         self.players = {Turn.P1:None, Turn.P2:None}
     
@@ -78,18 +91,21 @@ class TicTacToe(TurnBasedGame):
         board[move] = self.turn
         return board
 
+    def get_valid_moves(self):
+        return [tuple(i) for i in np.argwhere(self.board==0)]
+
+    def board2ohe(self, board):
+        """Coverts numpy board to one hot encoding input for neural network."""
+        return np.stack(np.array([board==val for val in [-1, 1]]), axis=2)
 
     @staticmethod
     def render(board):
         print(board)
         print()
-
-    def get_valid_moves(self):
-        return [tuple(i) for i in np.argwhere(self.board==0)]
-
+    
     @staticmethod
-    def generate_hashkey(game_state):
-        return game_state['board'].tobytes()
+    def generate_hashkey(board):
+        return board.tobytes()
 
 def main():
     results = {-1:0, 0:0, 1:0}
@@ -118,38 +134,53 @@ def main():
 
     print(results)
 
-# def main3():
-#     agent = AlphaZeroPlayer('p', TicTacToe, 100)
-#     #agent = MCTSPlayer('p', TicTacToe, 10)
-#     agent.is_saving_data = True
-
-#     t = TicTacToe()
-#     t.init_players([agent, agent])
-#     start = time.perf_counter()
-#     t.run()
-#     end = time.perf_counter()
-#     print(end - start)
-#     #print(t.board)
-#     #print(agent.saved_data)
-
-# def main4():
-#     folder_path = os.getcwd() + "/saved_models/"
-#     file_type = r'/*'
-#     files = glob.glob(folder_path + file_type)
-#     max_file = max(files, key=os.path.getctime)
-
-#     model = tf.keras.models.load_model(max_file)
+def main2():
+    import tensorflow as tf
+    from players.az_player import AlphaZeroPlayer
+    from players.basic_players import UserTTTPlayer
     
-#     agent = AlphaZeroPlayer('p', TicTacToe, model, 100)
-#     agent.is_saving_data = True
-#     p2 = MCTSPlayer('p2', TicTacToe, 100)
-#     t = TicTacToe()
-#     t.init_players([p2, agent])
-#     t.run(render=True)
-
-#     print(agent.saved_data)
-
+    folder_path = os.getcwd() + "/tictactoe/saved_models/"
+    file_type = r'/*'
+    files = glob.glob(folder_path + file_type)
     
+    print(f'files {files}')
+    if not files:
+        pass
+    else:
+        print('loading model...')
+        max_file = max(files, key=os.path.getctime)
+        print(max_file)
+        model = tf.keras.models.load_model(max_file, compile=False)
+        model.compile(loss=['mean_squared_error', 'categorical_crossentropy'])
+        print('model loaded!')
+
+    p1 = AlphaZeroPlayer(TicTacToe, (3,3,2), 9, model, 10, False)
+
+    p2 = UserTTTPlayer()#TicTacToe, (3,3,2), 9, None, 10, False)
+
+    # results = defaultdict(lambda: 0)
+
+    # for _ in range(100):
+    #     O = TicTacToe()
+    #     O.init_players([p1,p2])
+    #     O.run(render=False)
+    #     results[O.result] += 1
+    #     p1.mcts.node_dict = {}
+    #     p2.mcts.node_dict = {}
+
+    # print(results)
+
+    results = defaultdict(lambda: 0)
+
+    for _ in range(5):
+        O = TicTacToe()
+        O.init_players([p1,p1])
+        O.run(render=True)
+        results[O.result] += 1
+        p1.mcts.node_dict = {}
+        #p2.mcts.node_dict = {}
+
+    print(results)
 
 if __name__ == '__main__':
-    main()
+    main2()

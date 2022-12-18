@@ -8,3 +8,4 @@ az_multiproc.py
 __pycache__
 .pytest_cache
 .vscode
+*.log

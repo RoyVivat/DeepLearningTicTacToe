@@ -14,6 +14,9 @@ from games.game import TurnBasedGame, Turn
 #from players.basic_players import RandomPlayer, UserTTTPlayer
 
 class Othello(TurnBasedGame):
+    INPUT_SIZE = (8,8,2)
+    OUTPUT_SIZE = (64)
+
     def __init__(self, game_state = None):
         super().__init__(game_state)
         self.players = {Turn.P1:None, Turn.P2:None}
@@ -154,16 +157,17 @@ def main():
         print('loading model...')
         max_file = max(files, key=os.path.getctime)
         print(max_file)
-        model = tf.keras.models.load_model(max_file)
+        model = tf.keras.models.load_model(max_file, compile=False)
+        model.compile(loss=['mean_squared_error', 'categorical_crossentropy'])
         print('model loaded!')
 
-    p1 = AlphaZeroPlayer(Othello, (8,8,2), 64, None, 10, False)
+    p1 = AlphaZeroPlayer(Othello, (8,8,2), 64, None, 100, False)
     p1.mcts.model = model
-    p2 = AlphaZeroPlayer(Othello, (8,8,2), 64, None, 10, False)
+    p2 = AlphaZeroPlayer(Othello, (8,8,2), 64, None, 100, False)
 
     results = defaultdict(lambda: 0)
 
-    for _ in range(10):
+    for _ in range(20):
         O = Othello()
         O.init_players([p1,p2])
         O.run(render=False)
@@ -175,11 +179,13 @@ def main():
 
     results = defaultdict(lambda: 0)
 
-    for _ in range(10):
+    for _ in range(20):
         O = Othello()
         O.init_players([p2,p1])
         O.run(render=False)
         results[O.result] += 1
+        p1.mcts.node_dict = {}
+        p2.mcts.node_dict = {}
 
     print(results)
 
@@ -205,4 +211,4 @@ def main2():
 
 
 if __name__ == '__main__':
-    main2()
+    main()

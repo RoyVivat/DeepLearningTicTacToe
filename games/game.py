@@ -92,20 +92,26 @@ class TurnBasedGame(ABC):
 
     def render(self):
         raise Exception('Render method not implemented for this game.')
+
+    @abstractmethod
+    def board2ohe(self, board):
+        """Coverts game board to one hot encoding input for neural network."""
+        pass
     
     @staticmethod
     @abstractmethod
     def get_start_board():
-        # Gets the initial board state.
+        """Gets the initial board state"""
         pass
 
     @abstractmethod
     def is_game_over(self, board):
-        # Checks if the game is over
+        """Checks if the game is over"""
         pass
 
     @abstractmethod
     def is_valid_move(self, move):
+        """Checks if the move is valid"""
         pass
 
     @abstractmethod

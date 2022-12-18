@@ -15,7 +15,7 @@ class AlphaZeroPlayer(MCTSPlayer):
         mcts = self.mcts
         mcts.update_root(game_state)
         mcts.expand_children(mcts.root)
-        self.add_dirichlet_noise()
+        #self.add_dirichlet_noise()
 
         mcts.mcts(self.n_simulations)
 
