@@ -2,7 +2,7 @@
 ## A self-play learning bot that can master two player, fully-observable, deterministic, games. A self-learning project in self-learning.
 In this project I recreate the AlphaZero AI using a variety of resources including the original research paper and various articles and YouTube videos explaining concepts found in the research paper.  
 This project was made in order to enhance my skills as an engineer. Initially, I was interested in improving my programming skills and understanding of ML related topics. This project has grown to be more about learning about many different tools at different levels of the production pipeline.  
-The project is too early in development to provide installation/usability instructions. Same goes for demonstrations.
+I have yet to provide installation/usability instructions. Same goes for demonstrations.
 
 ## Tools
 This list below may seem pedantic to some, but I think it's worth highlighting for any future programmers that are in my position; Intermediate programmers lacking real-world production experience.
